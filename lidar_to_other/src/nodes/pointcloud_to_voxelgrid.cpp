@@ -63,11 +63,11 @@ public:
         int i = std::floor((x + max_x) / voxel_size);
         int j = std::floor((y + max_y) / voxel_size);
         int k = std::floor((z + max_z) / voxel_size);
-        ROS_DEBUG("XYZ: (%i, %i, %i)", i, j, k);
-        ROS_DEBUG("LENGTH: (%i)", length);
-        ROS_DEBUG("WIDTH: (%i)",width);
+        //ROS_DEBUG("XYZ: (%i, %i, %i)", i, j, k);
+        //ROS_DEBUG("LENGTH: (%i)", length);
+        //ROS_DEBUG("WIDTH: (%i)",width);
         int idx =i + j * length + k * (length * width);
-        ROS_DEBUG("IDX: (%i)",idx);
+        //ROS_DEBUG("IDX: (%i)",idx);
         return idx;
     }
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
@@ -85,6 +85,7 @@ public:
         {
             point = pcl[i];
             int idx = LidarToVoxelGridNode::point_to_index(point);
+            ROS_DEBUG("IDX: (%i)",idx);
             if (idx > this->size)
             {
                 ROS_WARN("Idx too large, the max is %i but %i is obtained", this->size - 1, idx);
