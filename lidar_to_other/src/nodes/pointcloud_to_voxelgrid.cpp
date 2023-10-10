@@ -10,6 +10,8 @@
 #include <pcl/point_cloud.h>
 #include <chrono>
 #include <rviz_voxelgrid_visuals_msgs/VoxelgridStamped.h>
+#include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
+#include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
 struct Coordinats
 {
     float xyz[3];
@@ -21,9 +23,11 @@ private:
     ros::NodeHandle nh;
     ros::Publisher voxelgrid_publisher;
     ros::Subscriber lidar_subscriber;
-    std::string input_topic, output_topic;
+    std::string input_topic, output_topic, visualization_topic, int_topic, float_topic;
     pcl::PointCloud<pcl::PointXYZ> pcl;
-    rviz_voxelgrid_visuals_msgs::VoxelgridStamped voxelgrid_msg;
+    rviz_voxelgrid_visuals_msgs::VoxelgridStamped rviz_voxelgrid_msg;
+    voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped float_voxelgrid;
+    voxelgrid_msgs::VoxelGridInt16MultiarrayStamped int_voxelgrid;
     float voxel_size;
     float max_x, max_y, max_z;
     int x_size, y_size, z_size, array_size;
@@ -34,7 +38,9 @@ public:
     {
         nh = ros::NodeHandle("~");
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
-        nh.param<std::string>("output_topic", output_topic, "voxelized_lidar");
+        nh.param<std::string>("visualization_voxel_grid_topic", visualization_topic, "voxel_grid_rviz");
+        nh.param<std::string>("int_voxel_grid_topic", int_topic, "voxel_grid_int");
+        nh.param<std::string>("float_voxel_grid_topic", float_topic, "voxelized_lidar");
         nh.param<float>("voxel_size", voxel_size, 1);
         nh.param<float>("max_x", max_x, 5);
         nh.param<float>("max_y", max_y, 5);
@@ -56,16 +62,16 @@ public:
         x_dim.stride = y_size * z_size;
         y_dim.stride = z_size;
         z_dim.stride = 1;
-        voxelgrid_msg.scale = voxel_size;
-        voxelgrid_msg.occupancy.data = std::vector<float>(array_size, 0);
-        voxelgrid_msg.occupancy.layout.dim.push_back(x_dim);
-        voxelgrid_msg.occupancy.layout.dim.push_back(y_dim);
-        voxelgrid_msg.occupancy.layout.dim.push_back(z_dim);
-        voxelgrid_msg.header.frame_id = frame;
-        voxelgrid_msg.has_color = false;
-        voxelgrid_msg.origin.x = -max_x;
-        voxelgrid_msg.origin.y = -max_y;
-        voxelgrid_msg.origin.z = -max_z;
+        rviz_voxelgrid_msg.scale = voxel_size;
+        rviz_voxelgrid_msg.occupancy.data = std::vector<float>(array_size, 0);
+        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(x_dim);
+        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(y_dim);
+        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(z_dim);
+        rviz_voxelgrid_msg.header.frame_id = frame;
+        rviz_voxelgrid_msg.has_color = false;
+        rviz_voxelgrid_msg.origin.x = -max_x;
+        rviz_voxelgrid_msg.origin.y = -max_y;
+        rviz_voxelgrid_msg.origin.z = -max_z;
         ROS_DEBUG("Input topic:  %s", input_topic.data());
         ROS_DEBUG("Output topic: %s", output_topic.data());
         ROS_DEBUG("Voxel size: %f", voxel_size);
@@ -101,7 +107,7 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < this->array_size; i++)
         {
-            voxelgrid_msg.occupancy.data[i] = 0.0;
+            rviz_voxelgrid_msg.occupancy.data[i] = 0.0;
         }
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
@@ -111,11 +117,11 @@ public:
             if (is_point_in_grid(point))
             {
                 int idx = LidarToVoxelGridNode::point_to_index(point);
-                voxelgrid_msg.occupancy.data[idx] = (float)1.0;
+                rviz_voxelgrid_msg.occupancy.data[idx] = (float)1.0;
             }
         }
-        this->voxelgrid_msg.header.stamp = ros::Time::now();
-        voxelgrid_publisher.publish(voxelgrid_msg);
+        this->rviz_voxelgrid_msg.header.stamp = ros::Time::now();
+        voxelgrid_publisher.publish(rviz_voxelgrid_msg);
         auto end = std::chrono::high_resolution_clock::now();
         auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         ROS_DEBUG("Callback time: %li", msecs.count());

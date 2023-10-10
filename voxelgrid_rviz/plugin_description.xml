@@ -1,0 +1,18 @@
+<library path="lib/librviz_voxelgrid_display">
+  <class name="voxelgrid_msgs/FloatVoxelGrid"
+         type="voxelgrid_msgs::FloatVoxelGridDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays a Voxel Grid
+    </description>
+    <message_type>voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped</message_type>
+  </class>
+  <class name="voxelgrid_msgs/IntVoxelGrid"
+         type="voxelgrid_msgs::IntVoxelGridDisplay"
+         base_class_type="rviz::Display">
+    <description>
+      Displays a Sparse Voxel Grid
+    </description>
+    <message_type>voxelgrid_msgs/VoxelGridInt16MultiarrayStamped</message_type>
+  </class>
+</library>

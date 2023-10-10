@@ -1,0 +1,2 @@
+std_msgs/Header header
+voxelgrid_msgs/VoxelGridFloat32Multiarray voxel_grid
