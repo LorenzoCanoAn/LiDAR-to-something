@@ -13,7 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  pcl_conversions)
+  pcl_conversions
+  rviz_voxelgrid_visuals_msgs)
 find_package(OpenCV)
 find_package(PCL)
 ## System dependencies are found with CMake's conventions

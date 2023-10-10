@@ -2,6 +2,8 @@
     <env name="ROSCONSOLE_CONFIG_FILE" 
     value="$(find lidar_to_other)/config/rosconsole/debug.conf"/>
     <node name='pointcloud_to_voxelgrid' type="pointcloud_to_voxelgrid" pkg="lidar_to_other" output="screen">
+        <param name="voxel_size" value="0.125"/>
         <param name="input_topic" value="/points"/>
+        <param name="frame" value="velodyne"/>
     </node>
 </launch>

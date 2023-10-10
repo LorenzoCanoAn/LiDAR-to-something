@@ -3,11 +3,13 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Point.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Header.h>
 #include <string>
 #include <math.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <chrono>
+#include <rviz_voxelgrid_visuals_msgs/VoxelgridStamped.h>
 struct Coordinats
 {
     float xyz[3];
@@ -17,14 +19,15 @@ class LidarToVoxelGridNode
 {
 private:
     ros::NodeHandle nh;
-    ros::Publisher voxel_grid_publisher;
+    ros::Publisher voxelgrid_publisher;
     ros::Subscriber lidar_subscriber;
     std::string input_topic, output_topic;
     pcl::PointCloud<pcl::PointXYZ> pcl;
+    rviz_voxelgrid_visuals_msgs::VoxelgridStamped voxelgrid_msg;
     float voxel_size;
     float max_x, max_y, max_z;
-    int length, width, height, size;
-    int *voxel_grid;
+    int x_size, y_size, z_size, array_size;
+    std::string frame;
 
 public:
     LidarToVoxelGridNode(void)
@@ -33,29 +36,54 @@ public:
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
         nh.param<std::string>("output_topic", output_topic, "voxelized_lidar");
         nh.param<float>("voxel_size", voxel_size, 1);
-        nh.param<float>("max_x", max_x, 10);
-        nh.param<float>("max_y", max_y, 10);
-        nh.param<float>("max_z", max_z, 3);
-        length = std::floor(max_x * 2 / voxel_size);
-        width = std::floor(max_y * 2 / voxel_size);
-        height = std::floor(max_z * 2 / voxel_size);
-        size = length * width * height;
-        voxel_grid = new int[size];
+        nh.param<float>("max_x", max_x, 5);
+        nh.param<float>("max_y", max_y, 5);
+        nh.param<float>("max_z", max_z, 2);
+        nh.param<std::string>("frame", frame, "voxelgrid_frame");
+        x_size = std::floor(max_x * 2 / voxel_size);
+        y_size = std::floor(max_y * 2 / voxel_size);
+        z_size = std::floor(max_z * 2 / voxel_size);
+        array_size = x_size * y_size * z_size;
+        std_msgs::MultiArrayDimension x_dim;
+        std_msgs::MultiArrayDimension y_dim;
+        std_msgs::MultiArrayDimension z_dim;
+        x_dim.label = "x";
+        y_dim.label = "y";
+        z_dim.label = "z";
+        x_dim.size = x_size;
+        y_dim.size = y_size;
+        z_dim.size = z_size;
+        x_dim.stride = y_size * z_size;
+        y_dim.stride = z_size;
+        z_dim.stride = 1;
+        voxelgrid_msg.scale = voxel_size;
+        voxelgrid_msg.occupancy.data = std::vector<float>(array_size, 0);
+        voxelgrid_msg.occupancy.layout.dim.push_back(x_dim);
+        voxelgrid_msg.occupancy.layout.dim.push_back(y_dim);
+        voxelgrid_msg.occupancy.layout.dim.push_back(z_dim);
+        voxelgrid_msg.header.frame_id = frame;
+        voxelgrid_msg.has_color = false;
+        voxelgrid_msg.origin.x = -max_x;
+        voxelgrid_msg.origin.y = -max_y;
+        voxelgrid_msg.origin.z = -max_z;
         ROS_DEBUG("Input topic:  %s", input_topic.data());
         ROS_DEBUG("Output topic: %s", output_topic.data());
         ROS_DEBUG("Voxel size: %f", voxel_size);
         ROS_DEBUG("Max x, y, z:(%f,%f,%f)", max_x, max_y, max_z);
-        ROS_DEBUG("Voxel grid size: %i", size);
+        ROS_DEBUG("Voxel grid size: %i", array_size);
         lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 10, &LidarToVoxelGridNode::ptcl_callback, this);
+        voxelgrid_publisher = nh.advertise<rviz_voxelgrid_visuals_msgs::VoxelgridStamped>("voxel_grid", 10);
     }
-    bool is_point_in_grid(pcl::PointXYZ pt){
+    bool is_point_in_grid(pcl::PointXYZ pt)
+    {
         return is_point_in_grid(pt.x, pt.y, pt.z);
     }
     bool is_point_in_grid(float x, float y, float z)
     {
         return std::abs(x) < this->max_x and std::abs(y) < this->max_y and std::abs(y) < this->max_y;
     }
-    int point_to_index(pcl::PointXYZ pt){
+    int point_to_index(pcl::PointXYZ pt)
+    {
         return coordinates_to_index(pt.x, pt.y, pt.z);
     }
     int coordinates_to_index(float x, float y, float z)
@@ -63,40 +91,34 @@ public:
         int i = std::floor((x + max_x) / voxel_size);
         int j = std::floor((y + max_y) / voxel_size);
         int k = std::floor((z + max_z) / voxel_size);
-        //ROS_DEBUG("XYZ: (%i, %i, %i)", i, j, k);
-        //ROS_DEBUG("LENGTH: (%i)", length);
-        //ROS_DEBUG("WIDTH: (%i)",width);
-        int idx =i + j * length + k * (length * width);
-        //ROS_DEBUG("IDX: (%i)",idx);
+        int idx = i * y_size * z_size + j * z_size + k;
         return idx;
     }
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         // reset voxel grid
+        ROS_DEBUG("Callback start");
         auto start = std::chrono::high_resolution_clock::now();
-        for (int i = 0; i < this->size; i++)
+        for (int i = 0; i < this->array_size; i++)
         {
-            this->voxel_grid[i] = 0;
+            voxelgrid_msg.occupancy.data[i] = 0.0;
         }
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
-        int max_size = 0;
         for (int i = 0; i < pcl.width; i++)
         {
             point = pcl[i];
-            int idx = LidarToVoxelGridNode::point_to_index(point);
-            ROS_DEBUG("IDX: (%i)",idx);
-            if (idx > this->size)
+            if (is_point_in_grid(point))
             {
-                ROS_WARN("Idx too large, the max is %i but %i is obtained", this->size - 1, idx);
+                int idx = LidarToVoxelGridNode::point_to_index(point);
+                voxelgrid_msg.occupancy.data[idx] = (float)1.0;
             }
-            this->voxel_grid[idx] += 1;
         }
-        ROS_INFO("Max idx: %i ", max_size);
-        int time_before_loop_begins = std::time(NULL);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        // ROS_INFO("Callback duration: %i microseconds",duration.count());
+        this->voxelgrid_msg.header.stamp = ros::Time::now();
+        voxelgrid_publisher.publish(voxelgrid_msg);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        ROS_DEBUG("Callback time: %li", msecs.count());
     }
 };
 
