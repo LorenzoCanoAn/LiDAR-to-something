@@ -11,15 +11,15 @@
 
 #include "voxel_visual.h"
 
-namespace rviz_voxelgrid_visuals {
+namespace voxelgrid_rviz {
 
-class IntVoxelGridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped> {
+class Float32VoxelGridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped> {
   Q_OBJECT
  public:
   // Constructor.  pluginlib::ClassLoader creates instances by calling
   // the default constructor, so make sure you have one.
-  IntVoxelGridDisplay();
-  ~IntVoxelGridDisplay() override;
+  Float32VoxelGridDisplay();
+  ~Float32VoxelGridDisplay() override;
 
   // Overrides of protected virtual functions from Display.  As much
   // as possible, when Displays are not enabled, they should not be
@@ -52,13 +52,13 @@ class IntVoxelGridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::Vo
   rviz::FloatProperty* cutoff_property_;
 };
 
-class Int16GridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::VoxelGridInt16MultiarrayStamped> {
+class Int16VoxelGridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::VoxelGridInt16MultiarrayStamped> {
  Q_OBJECT
  public:
   // Constructor.  pluginlib::ClassLoader creates instances by calling
   // the default constructor, so make sure you have one.
-  Int16GridDisplay();
-  ~Int16GridDisplay() override;
+  Int16VoxelGridDisplay();
+  ~Int16VoxelGridDisplay() override;
 
   // Overrides of protected virtual functions from Display.  As much
   // as possible, when Displays are not enabled, they should not be
@@ -91,6 +91,6 @@ class Int16GridDisplay : public rviz::MessageFilterDisplay<voxelgrid_msgs::Voxel
   rviz::FloatProperty* cutoff_property_;
 };
 
-}  // end namespace rviz_voxelgrid_visuals
+}  // end namespace voxelgrid_rviz
 
 #endif  // VOXEL_DISPLAY_H

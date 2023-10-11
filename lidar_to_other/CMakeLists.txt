@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   pcl_conversions
-  rviz_voxelgrid_visuals_msgs
   voxelgrid_msgs)
 find_package(OpenCV)
 find_package(PCL)

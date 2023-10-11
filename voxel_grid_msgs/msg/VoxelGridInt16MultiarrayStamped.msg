@@ -1,2 +1,0 @@
-std_msgs/Header header
-voxel_grid_msgs/VoxelGridInt16Multiarray voxel_grid

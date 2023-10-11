@@ -1,3 +1,0 @@
-geometry_msgs/Point origin
-std_msgs/Float32 scale
-std_msgs/Int16MultiArray data

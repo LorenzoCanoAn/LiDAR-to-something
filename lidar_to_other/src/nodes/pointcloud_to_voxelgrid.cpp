@@ -9,7 +9,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <chrono>
-#include <rviz_voxelgrid_visuals_msgs/VoxelgridStamped.h>
 #include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
 #include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
 struct Coordinats
@@ -25,9 +24,8 @@ private:
     ros::Subscriber lidar_subscriber;
     std::string input_topic, output_topic, visualization_topic, int_topic, float_topic;
     pcl::PointCloud<pcl::PointXYZ> pcl;
-    rviz_voxelgrid_visuals_msgs::VoxelgridStamped rviz_voxelgrid_msg;
-    voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped float_voxelgrid;
-    voxelgrid_msgs::VoxelGridInt16MultiarrayStamped int_voxelgrid;
+    voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped float_voxelgrid_msg;
+    //voxelgrid_msgs::VoxelGridInt16MultiarrayStamped int_voxelgrid_msg;
     float voxel_size;
     float max_x, max_y, max_z;
     int x_size, y_size, z_size, array_size;
@@ -62,23 +60,22 @@ public:
         x_dim.stride = y_size * z_size;
         y_dim.stride = z_size;
         z_dim.stride = 1;
-        rviz_voxelgrid_msg.scale = voxel_size;
-        rviz_voxelgrid_msg.occupancy.data = std::vector<float>(array_size, 0);
-        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(x_dim);
-        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(y_dim);
-        rviz_voxelgrid_msg.occupancy.layout.dim.push_back(z_dim);
-        rviz_voxelgrid_msg.header.frame_id = frame;
-        rviz_voxelgrid_msg.has_color = false;
-        rviz_voxelgrid_msg.origin.x = -max_x;
-        rviz_voxelgrid_msg.origin.y = -max_y;
-        rviz_voxelgrid_msg.origin.z = -max_z;
+        float_voxelgrid_msg.voxel_grid.array.data = std::vector<float>(array_size, 0);
+        float_voxelgrid_msg.voxel_grid.array.layout.dim.push_back(x_dim);
+        float_voxelgrid_msg.voxel_grid.array.layout.dim.push_back(y_dim);
+        float_voxelgrid_msg.voxel_grid.array.layout.dim.push_back(z_dim);
+        float_voxelgrid_msg.header.frame_id = frame;
+        float_voxelgrid_msg.voxel_grid.origin.x = -max_x;
+        float_voxelgrid_msg.voxel_grid.origin.y = -max_y;
+        float_voxelgrid_msg.voxel_grid.origin.z = -max_z;
+        float_voxelgrid_msg.voxel_grid.scale.data = voxel_size;
         ROS_DEBUG("Input topic:  %s", input_topic.data());
         ROS_DEBUG("Output topic: %s", output_topic.data());
         ROS_DEBUG("Voxel size: %f", voxel_size);
         ROS_DEBUG("Max x, y, z:(%f,%f,%f)", max_x, max_y, max_z);
         ROS_DEBUG("Voxel grid size: %i", array_size);
-        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 10, &LidarToVoxelGridNode::ptcl_callback, this);
-        voxelgrid_publisher = nh.advertise<rviz_voxelgrid_visuals_msgs::VoxelgridStamped>("voxel_grid", 10);
+        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
+        voxelgrid_publisher = nh.advertise<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped>("voxel_grid", 1);
     }
     bool is_point_in_grid(pcl::PointXYZ pt)
     {
@@ -107,7 +104,7 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < this->array_size; i++)
         {
-            rviz_voxelgrid_msg.occupancy.data[i] = 0.0;
+            float_voxelgrid_msg.voxel_grid.array.data[i] = 0.0;
         }
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
@@ -117,11 +114,11 @@ public:
             if (is_point_in_grid(point))
             {
                 int idx = LidarToVoxelGridNode::point_to_index(point);
-                rviz_voxelgrid_msg.occupancy.data[idx] = (float)1.0;
+                float_voxelgrid_msg.voxel_grid.array.data[idx] = 1.0;
             }
         }
-        this->rviz_voxelgrid_msg.header.stamp = ros::Time::now();
-        voxelgrid_publisher.publish(rviz_voxelgrid_msg);
+        this->float_voxelgrid_msg.header.stamp = ros::Time::now();
+        voxelgrid_publisher.publish(float_voxelgrid_msg);
         auto end = std::chrono::high_resolution_clock::now();
         auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         ROS_DEBUG("Callback time: %li", msecs.count());

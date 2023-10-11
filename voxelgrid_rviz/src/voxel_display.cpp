@@ -9,11 +9,11 @@
 
 #include "voxel_visual.h"
 
-namespace rviz_voxelgrid_visuals {
+namespace voxelgrid_rviz {
 
 // The constructor must have no arguments, so we can't give the
 // constructor the parameters it needs to fully initialize.
-IntVoxelGridDisplay::IntVoxelGridDisplay() {
+Float32VoxelGridDisplay::Float32VoxelGridDisplay() {
   // We inherit the unreliable property, but do not want to display it
   delete unreliable_property_;
 
@@ -42,21 +42,21 @@ IntVoxelGridDisplay::IntVoxelGridDisplay() {
 // ``MessageFilterDisplay<message type>``, to save typing that long
 // templated class name every time you need to refer to the
 // superclass.
-void IntVoxelGridDisplay::onInitialize() {
+void Float32VoxelGridDisplay::onInitialize() {
   MFDClass::onInitialize();
   visual_.reset(new Float32VoxelGridVisual(context_->getSceneManager(), scene_node_));
   updateColorAndAlpha();
 }
 
-IntVoxelGridDisplay::~IntVoxelGridDisplay() = default;
+Float32VoxelGridDisplay::~Float32VoxelGridDisplay() = default;
 
-void IntVoxelGridDisplay::reset() {
+void Float32VoxelGridDisplay::reset() {
   MFDClass::reset();
   visual_->reset();
 }
 
 // Set the current color and alpha values for each visual.
-void IntVoxelGridDisplay::updateColorAndAlpha() {
+void Float32VoxelGridDisplay::updateColorAndAlpha() {
   float alpha = alpha_property_->getFloat();
   Ogre::ColourValue color = color_property_->getOgreColor();
   visual_->setHidden(hide_property_->getBool());
@@ -66,7 +66,7 @@ void IntVoxelGridDisplay::updateColorAndAlpha() {
   visual_->updatePointCloud();
 }
 
-void IntVoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16MultiarrayStamped::ConstPtr& msg) {
+void Float32VoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped::ConstPtr& msg) {
   // Here we call the rviz::FrameManager to get the transform from the
   // fixed frame to the frame in the header of this Imu message.  If
   // it fails, we can't do anything else so we return.
@@ -77,8 +77,12 @@ void IntVoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16Mul
               qPrintable(fixed_frame_));
     return;
   }
-
   // Now set or update the contents of the chosen visual.
+  std::cout << " msg frame: " << msg->header.frame_id;
+  std::cout << " base frame: " << context_->getFixedFrame().toStdString();
+  std::cout << " x: " << orientation.x;
+  std::cout << " y: " << orientation.y;
+  std::cout << " z: " << orientation.z << "\n";
   visual_->setMessage(msg);
   visual_->setFramePosition(position);
   visual_->setFrameOrientation(orientation);
@@ -89,7 +93,7 @@ void IntVoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16Mul
  *****************************************/
 // The constructor must have no arguments, so we can't give the
 // constructor the parameters it needs to fully initialize.
-Int16GridDisplay::Int16GridDisplay() {
+Int16VoxelGridDisplay::Int16VoxelGridDisplay() {
   // We inherit the unreliable property, but do not want to display it
   delete unreliable_property_;
 
@@ -108,20 +112,19 @@ Int16GridDisplay::Int16GridDisplay() {
   hide_property_ = new rviz::BoolProperty("Hide", false, "Hide voxel grid", this, SLOT(updateColorAndAlpha()));
 }
 
-void Int16GridDisplay::onInitialize() {
+void Int16VoxelGridDisplay::onInitialize() {
   MFDClass::onInitialize();
   visual_.reset(new Int16VoxelGridVisual(context_->getSceneManager(), scene_node_));
   updateColorAndAlpha();
 }
 
-Int16GridDisplay::~Int16GridDisplay() = default;
+Int16VoxelGridDisplay::~Int16VoxelGridDisplay() = default;
 
-void Int16GridDisplay::reset() {
+void Int16VoxelGridDisplay::reset() {
   MFDClass::reset();
   visual_->reset();
 }
-
-void Int16GridDisplay::updateColorAndAlpha() {
+void Int16VoxelGridDisplay::updateColorAndAlpha() {
   float alpha = alpha_property_->getFloat();
   Ogre::ColourValue color = color_property_->getOgreColor();
   visual_->setHidden(hide_property_->getBool());
@@ -131,7 +134,7 @@ void Int16GridDisplay::updateColorAndAlpha() {
   visual_->updatePointCloud();
 }
 
-void Int16GridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16MultiarrayStamped::ConstPtr& msg) {
+void Int16VoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16MultiarrayStamped::ConstPtr& msg) {
   Ogre::Quaternion orientation;
   Ogre::Vector3 position;
   if (!context_->getFrameManager()->getTransform(msg->header.frame_id, msg->header.stamp, position, orientation)) {
@@ -145,9 +148,9 @@ void Int16GridDisplay::processMessage(const voxelgrid_msgs::VoxelGridInt16Multia
   visual_->setFrameOrientation(orientation);
 }
 
-}  // end namespace rviz_voxelgrid_visuals
+}  // end namespace voxelgrid_rviz
 
 // Tell pluginlib about this class.  It is important to do this in
 // global scope, outside our package's namespace.
-PLUGINLIB_EXPORT_CLASS(rviz_voxelgrid_visuals::IntVoxelGridDisplay, rviz::Display)
-PLUGINLIB_EXPORT_CLASS(rviz_voxelgrid_visuals::Int16GridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS(voxelgrid_rviz::Float32VoxelGridDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS(voxelgrid_rviz::Int16VoxelGridDisplay, rviz::Display)

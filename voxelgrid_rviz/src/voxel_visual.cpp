@@ -4,7 +4,7 @@
 #include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
 #include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
 
-namespace rviz_voxelgrid_visuals {
+namespace voxelgrid_rviz {
 
 VoxelGridVisual::VoxelGridVisual(Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node) {
   scene_manager_ = scene_manager;
@@ -65,7 +65,7 @@ void Float32VoxelGridVisual::updatePointCloud() {
   const std::vector<std_msgs::MultiArrayDimension>& dims = latest_msg.voxel_grid.array.layout.dim;
   int data_offset = latest_msg.voxel_grid.array.layout.data_offset;
 
-  std::vector<rviz::PointCloud::Point> points;
+  std::vector<rviz::PointCloud::Point> pointcloud;
   for (int i = 0; i < dims[0].size; i++) {
     for (int j = 0; j < dims[1].size; j++) {
       for (int k = 0; k < dims[2].size; k++) {
@@ -73,19 +73,17 @@ void Float32VoxelGridVisual::updatePointCloud() {
         if (val < threshold_) {
           continue;
         }
-
-        rviz::PointCloud::Point p;
-        p.position.x = scale / 2 + i * scale + latest_msg.voxel_grid.origin.x;
-        p.position.y = scale / 2 + j * scale + latest_msg.voxel_grid.origin.y;
-        p.position.z = scale / 2 + k * scale + latest_msg.voxel_grid.origin.z;
-
+        rviz::PointCloud::Point point;
+        point.position.x = scale / 2 + i * scale + latest_msg.voxel_grid.origin.x;
+        point.position.y = scale / 2 + j * scale + latest_msg.voxel_grid.origin.y;
+        point.position.z = scale / 2 + k * scale + latest_msg.voxel_grid.origin.z;
         if (binary_display_) {
           val = 1.0;
         }
 
-        p.setColor(r_, g_, b_, std::min(val * a_, 1.0f));
+        point.setColor(r_, g_, b_, std::min(val * a_, 1.0f));
 
-        points.push_back(p);
+        pointcloud.push_back(point);
       }
     }
   }
@@ -97,7 +95,7 @@ void Float32VoxelGridVisual::updatePointCloud() {
   bool use_per_point = !(a_ >= 1.0 && binary_display_);
   voxel_grid_points_->setAlpha(a_, use_per_point);
 
-  voxel_grid_points_->addPoints(&points.front(), points.size());
+  voxel_grid_points_->addPoints(&pointcloud.front(), pointcloud.size());
 }
 
 void Float32VoxelGridVisual::reset() {
@@ -143,7 +141,6 @@ void Int16VoxelGridVisual::updatePointCloud() {
         p.position.x = scale / 2 + i * scale + latest_msg.voxel_grid.origin.x;
         p.position.y = scale / 2 + j * scale + latest_msg.voxel_grid.origin.y;
         p.position.z = scale / 2 + k * scale + latest_msg.voxel_grid.origin.z;
-
         if (binary_display_) {
           val = 1.0;
         }
@@ -164,5 +161,10 @@ void Int16VoxelGridVisual::updatePointCloud() {
 
   voxel_grid_points_->addPoints(&points.front(), points.size());
 }
+void Int16VoxelGridVisual::reset() {
+  latest_msg = voxelgrid_msgs::VoxelGridInt16MultiarrayStamped();
+  VoxelGridVisual::reset();
+}
 
-}  // end namespace rviz_voxelgrid_visuals
+
+}  // end namespace voxelgrid_rviz

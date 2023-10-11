@@ -7,7 +7,7 @@
 #include <rviz/ogre_helpers/point_cloud.h>
 #include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
 #include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
-namespace rviz_voxelgrid_visuals {
+namespace voxelgrid_rviz {
 
 class VoxelGridVisual {
  public:
@@ -85,6 +85,6 @@ class Int16VoxelGridVisual : public VoxelGridVisual{
   voxelgrid_msgs::VoxelGridInt16MultiarrayStamped latest_msg;
 };
 
-}  // end namespace rviz_voxelgrid_visuals
+}  // end namespace voxelgrid_rviz
 
 #endif  // VOXEL_VISUAL_H

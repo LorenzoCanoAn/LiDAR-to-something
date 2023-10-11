@@ -9,7 +9,6 @@ project(voxelgrid_rviz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
 voxelgrid_msgs
-  message_generation
   std_msgs
   geometry_msgs
   rviz
@@ -126,6 +125,13 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/voxelgrid_msgs.cpp
 # )
+add_library(${PROJECT_NAME}
+        ${SRC_FILES}
+        )
+target_link_libraries(${PROJECT_NAME}
+        ${QT_LIBRARIES}
+        ${catkin_LIBRARES}
+        )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -162,7 +168,12 @@ include_directories(
 #         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #         )
-
+install(TARGETS
+        ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
 install(FILES
         plugin_description.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
