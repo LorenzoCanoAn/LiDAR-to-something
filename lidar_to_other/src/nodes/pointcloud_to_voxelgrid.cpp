@@ -100,8 +100,8 @@ public:
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         // reset voxel grid
-        ROS_DEBUG("Callback start");
-        auto start = std::chrono::high_resolution_clock::now();
+        //ROS_DEBUG("Callback start");
+        //auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < this->array_size; i++)
         {
             float_voxelgrid_msg.voxel_grid.array.data[i] = 0.0;
@@ -119,9 +119,9 @@ public:
         }
         this->float_voxelgrid_msg.header.stamp = ros::Time::now();
         voxelgrid_publisher.publish(float_voxelgrid_msg);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        ROS_DEBUG("Callback time: %li", msecs.count());
+        //auto end = std::chrono::high_resolution_clock::now();
+        //auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        //ROS_DEBUG("Callback time: %li", msecs.count());
     }
 };
 
