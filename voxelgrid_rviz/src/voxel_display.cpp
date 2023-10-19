@@ -78,11 +78,6 @@ void Float32VoxelGridDisplay::processMessage(const voxelgrid_msgs::VoxelGridFloa
     return;
   }
   // Now set or update the contents of the chosen visual.
-  std::cout << " msg frame: " << msg->header.frame_id;
-  std::cout << " base frame: " << context_->getFixedFrame().toStdString();
-  std::cout << " x: " << orientation.x;
-  std::cout << " y: " << orientation.y;
-  std::cout << " z: " << orientation.z << "\n";
   visual_->setMessage(msg);
   visual_->setFramePosition(position);
   visual_->setFrameOrientation(orientation);

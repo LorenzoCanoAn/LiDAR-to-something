@@ -11,10 +11,6 @@
 #include <chrono>
 #include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
 #include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
-struct Coordinats
-{
-    float xyz[3];
-};
 
 class LidarToVoxelGridNode
 {
@@ -74,6 +70,7 @@ public:
         ROS_DEBUG("Voxel size: %f", voxel_size);
         ROS_DEBUG("Max x, y, z:(%f,%f,%f)", max_x, max_y, max_z);
         ROS_DEBUG("Voxel grid size: %i", array_size);
+        ROS_DEBUG("Voxel grid shape: (%i, %i , %i)", x_size, y_size, z_size);
         lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
         voxelgrid_publisher = nh.advertise<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped>("voxel_grid", 1);
     }
