@@ -1,0 +1,111 @@
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Image.h>
+#include <geometry_msgs/Point.h>
+#include <std_msgs/String.h>
+#include <std_msgs/Header.h>
+#include <string>
+#include <math.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <chrono>
+#include <cv_bridge/cv_bridge.h>
+#include <opencv4/opencv2/core.hpp>
+#include <cmath>
+
+struct ijd
+{
+    int i, j;
+    float d;
+};
+
+class LidarToVoxelGridNode
+{
+private:
+    ros::NodeHandle nh;
+    ros::Publisher image_publisher;
+    ros::Subscriber lidar_subscriber;
+    std::string input_topic, output_topic;
+    pcl::PointCloud<pcl::PointXYZ> pcl;
+    sensor_msgs::ImagePtr image_msg;
+    cv_bridge::CvImage image;
+    int height, width;
+    float max_vertical_angle, min_vertical_angle, vertical_angle_range;
+    float max_horizontal_angle, min_horizontal_angle, horizontal_angle_range;
+    float max_distance;
+
+public:
+    LidarToVoxelGridNode(void)
+    {
+        nh = ros::NodeHandle("~");
+        nh.param<std::string>("input_topic", input_topic, "lidar_reading");
+        nh.param<std::string>("output_topic", output_topic, "voxelized_ptcl");
+        nh.param<int>("height", height, 16);
+        nh.param<int>("width", width, 720);
+        nh.param<float>("max_vertical_angle", max_vertical_angle, 15.0);
+        nh.param<float>("min_vertical_angle", min_vertical_angle, -15.0);
+        nh.param<float>("max_vertical_angle", max_horizontal_angle, 180);
+        nh.param<float>("min_vertical_angle", min_horizontal_angle, -180);
+        nh.param<float>("max_distance", max_distance, 10);
+        vertical_angle_range = max_vertical_angle - min_vertical_angle;
+        horizontal_angle_range = max_horizontal_angle - min_horizontal_angle;
+        ROS_DEBUG("Input topic:  %s", input_topic.data());
+        ROS_DEBUG("Output topic: %s", output_topic.data());
+        ROS_DEBUG("Height: %i", height);
+        ROS_DEBUG("Width: %i", width);
+        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
+        image_publisher = nh.advertise<sensor_msgs::Image>(output_topic, 1);
+    }
+    ijd point_to_index(pcl::PointXYZ pt)
+    {
+        return coordinates_to_index(pt.x, pt.y, pt.z);
+    }
+    ijd coordinates_to_index(float x, float y, float z)
+    {
+        float dist = std::sqrt(x * x + y * y + z * z);
+        float dist_to_z_axis = std::sqrt(x * x + y * y);
+        float theta_angle_deg = std::atan2(y, x) / M_PI * 180;
+        float delta_angle_deg = std::atan2(z, dist_to_z_axis) / M_PI * 180;
+        int delta_idx = std::floor((delta_angle_deg - min_vertical_angle) / (vertical_angle_range) * (height - 1));
+        int theta_idx = std::floor(((theta_angle_deg - min_horizontal_angle) / (horizontal_angle_range)) * (width - 1));
+        theta_idx = (width - 1) - theta_idx;
+        delta_idx = (height - 1) - delta_idx;
+        ijd idx;
+        idx.i = delta_idx;
+        idx.j = theta_idx;
+        idx.d = dist;
+        return idx;
+    }
+    void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
+    {
+        cv_bridge::CvImagePtr cv_ptr;
+        image.image = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
+        pcl::fromROSMsg(*ptcl_msg, pcl);
+        pcl::PointXYZ point;
+        for (int i = 0; i < pcl.width; i++)
+        {
+            point = pcl[i];
+            ijd idx = LidarToVoxelGridNode::point_to_index(point);
+            float distance = idx.d;
+            float img_number = (max_distance - distance) / max_distance;
+            if (img_number > 0)
+            {
+
+                image.image.at<float>(idx.i, idx.j) = img_number;
+            }
+        }
+        image.header.stamp = ros::Time::now();
+        sensor_msgs::Image ros_image;
+        image.toImageMsg(ros_image);
+        ros_image.encoding = "32FC1";
+        image_publisher.publish(ros_image);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "pointcloud_to_voxelgrid");
+    LidarToVoxelGridNode my_class = LidarToVoxelGridNode();
+    ros::spin();
+}

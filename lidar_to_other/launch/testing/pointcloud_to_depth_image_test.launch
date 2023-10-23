@@ -1,0 +1,9 @@
+<launch>
+    <env name="ROSCONSOLE_CONFIG_FILE" 
+    value="$(find lidar_to_other)/config/rosconsole/debug.conf"/>
+    <node name='pointcloud_to_depth_image' type="pointcloud_to_depth_image" pkg="lidar_to_other" output="screen">
+        <param name="input_topic" value="/points"/>
+        <param name="output_topic" value="/depth_image"/>
+        <param name="width" value="1500"/>
+    </node>
+</launch>

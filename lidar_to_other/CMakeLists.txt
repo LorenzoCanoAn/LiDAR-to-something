@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_conversions
   voxelgrid_msgs)
-find_package(OpenCV)
+find_package(OpenCV REQUIRED)
 find_package(PCL)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -123,7 +123,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
 )
-
+include_directories(${OpenCV_INCLUDE_DIRS})        
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/LiDAR-to-something.cpp
@@ -138,6 +138,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(pointcloud_to_voxelgrid src/nodes/pointcloud_to_voxelgrid.cpp)
+add_executable(pointcloud_to_depth_image src/nodes/pointcloud_to_depth_image.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,9 +149,13 @@ add_executable(pointcloud_to_voxelgrid src/nodes/pointcloud_to_voxelgrid.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(pointcloud_to_voxelgrid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(pointcloud_to_depth_image ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pointcloud_to_voxelgrid
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(pointcloud_to_depth_image
   ${catkin_LIBRARIES}
 )
 

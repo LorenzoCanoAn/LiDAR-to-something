@@ -18,10 +18,9 @@ private:
     ros::NodeHandle nh;
     ros::Publisher voxelgrid_publisher;
     ros::Subscriber lidar_subscriber;
-    std::string input_topic, output_topic, visualization_topic, int_topic, float_topic;
+    std::string input_topic, output_topic;
     pcl::PointCloud<pcl::PointXYZ> pcl;
     voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped float_voxelgrid_msg;
-    //voxelgrid_msgs::VoxelGridInt16MultiarrayStamped int_voxelgrid_msg;
     float voxel_size;
     float max_x, max_y, max_z;
     int x_size, y_size, z_size, array_size;
@@ -32,9 +31,7 @@ public:
     {
         nh = ros::NodeHandle("~");
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
-        nh.param<std::string>("visualization_voxel_grid_topic", visualization_topic, "voxel_grid_rviz");
-        nh.param<std::string>("int_voxel_grid_topic", int_topic, "voxel_grid_int");
-        nh.param<std::string>("float_voxel_grid_topic", float_topic, "voxelized_lidar");
+        nh.param<std::string>("output_topic", output_topic, "voxelized_ptcl");
         nh.param<float>("voxel_size", voxel_size, 1);
         nh.param<float>("max_x", max_x, 5);
         nh.param<float>("max_y", max_y, 5);
@@ -72,7 +69,7 @@ public:
         ROS_DEBUG("Voxel grid size: %i", array_size);
         ROS_DEBUG("Voxel grid shape: (%i, %i , %i)", x_size, y_size, z_size);
         lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
-        voxelgrid_publisher = nh.advertise<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped>("voxel_grid", 1);
+        voxelgrid_publisher = nh.advertise<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped>(output_topic, 1);
     }
     bool is_point_in_grid(pcl::PointXYZ pt)
     {
@@ -97,8 +94,8 @@ public:
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         // reset voxel grid
-        //ROS_DEBUG("Callback start");
-        //auto start = std::chrono::high_resolution_clock::now();
+        // ROS_DEBUG("Callback start");
+        // auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < this->array_size; i++)
         {
             float_voxelgrid_msg.voxel_grid.array.data[i] = 0.0;
@@ -116,9 +113,9 @@ public:
         }
         this->float_voxelgrid_msg.header.stamp = ros::Time::now();
         voxelgrid_publisher.publish(float_voxelgrid_msg);
-        //auto end = std::chrono::high_resolution_clock::now();
-        //auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        //ROS_DEBUG("Callback time: %li", msecs.count());
+        // auto end = std::chrono::high_resolution_clock::now();
+        // auto msecs = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        // ROS_DEBUG("Callback time: %li", msecs.count());
     }
 };
 
