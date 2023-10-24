@@ -34,26 +34,35 @@ private:
     float max_vertical_angle, min_vertical_angle, vertical_angle_range;
     float max_horizontal_angle, min_horizontal_angle, horizontal_angle_range;
     float max_distance;
+    bool invert_distance, normalize_image;
 
 public:
     LidarToVoxelGridNode(void)
     {
         nh = ros::NodeHandle("~");
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
-        nh.param<std::string>("output_topic", output_topic, "voxelized_ptcl");
+        nh.param<std::string>("output_topic", output_topic, "depth_image");
         nh.param<int>("height", height, 16);
         nh.param<int>("width", width, 720);
         nh.param<float>("max_vertical_angle", max_vertical_angle, 15.0);
         nh.param<float>("min_vertical_angle", min_vertical_angle, -15.0);
-        nh.param<float>("max_vertical_angle", max_horizontal_angle, 180);
-        nh.param<float>("min_vertical_angle", min_horizontal_angle, -180);
-        nh.param<float>("max_distance", max_distance, 10);
+        nh.param<float>("max_horizontal_angle", max_horizontal_angle, 180);
+        nh.param<float>("min_horizontal_angle", min_horizontal_angle, -180);
+        nh.param<float>("max_distance", max_distance, 20);
+        nh.param<bool>("invert_distance", invert_distance, true);
+        nh.param<bool>("normalize_image", normalize_image, false);
         vertical_angle_range = max_vertical_angle - min_vertical_angle;
         horizontal_angle_range = max_horizontal_angle - min_horizontal_angle;
         ROS_DEBUG("Input topic:  %s", input_topic.data());
         ROS_DEBUG("Output topic: %s", output_topic.data());
         ROS_DEBUG("Height: %i", height);
         ROS_DEBUG("Width: %i", width);
+        ROS_DEBUG("Min horizontal angle: %f", min_horizontal_angle);
+        ROS_DEBUG("Max horizontal angle: %f", max_horizontal_angle);
+        ROS_DEBUG("horizontal angle range: %f", horizontal_angle_range);
+        ROS_DEBUG("Min vertical angle: %f", min_vertical_angle);
+        ROS_DEBUG("Max vertical angle: %f", max_vertical_angle);
+        ROS_DEBUG("Vertical angle range: %f", vertical_angle_range);
         lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
         image_publisher = nh.advertise<sensor_msgs::Image>(output_topic, 1);
     }
@@ -68,7 +77,8 @@ public:
         float theta_angle_deg = std::atan2(y, x) / M_PI * 180;
         float delta_angle_deg = std::atan2(z, dist_to_z_axis) / M_PI * 180;
         int delta_idx = std::floor((delta_angle_deg - min_vertical_angle) / (vertical_angle_range) * (height - 1));
-        int theta_idx = std::floor(((theta_angle_deg - min_horizontal_angle) / (horizontal_angle_range)) * (width - 1));
+        float reduced_theta = (theta_angle_deg - min_horizontal_angle) / (horizontal_angle_range);
+        int theta_idx = std::floor( reduced_theta * (width - 1));
         theta_idx = (width - 1) - theta_idx;
         delta_idx = (height - 1) - delta_idx;
         ijd idx;
@@ -88,12 +98,14 @@ public:
             point = pcl[i];
             ijd idx = LidarToVoxelGridNode::point_to_index(point);
             float distance = idx.d;
-            float img_number = (max_distance - distance) / max_distance;
-            if (img_number > 0)
-            {
-
-                image.image.at<float>(idx.i, idx.j) = img_number;
+            float img_number = distance < max_distance ? distance : max_distance;
+            if (invert_distance){
+                img_number = max_distance - img_number;
             }
+            if (normalize_image){
+                img_number/= max_distance;
+            }
+            image.image.at<float>(idx.i, idx.j) = img_number;
         }
         image.header.stamp = ros::Time::now();
         sensor_msgs::Image ros_image;
