@@ -34,6 +34,7 @@ private:
     float max_vertical_angle, min_vertical_angle, vertical_angle_range;
     float max_horizontal_angle, min_horizontal_angle, horizontal_angle_range;
     float max_distance;
+    float void_value;
     bool invert_distance, normalize_image;
 
 public:
@@ -49,6 +50,7 @@ public:
         nh.param<float>("max_horizontal_angle", max_horizontal_angle, 180);
         nh.param<float>("min_horizontal_angle", min_horizontal_angle, -180);
         nh.param<float>("max_distance", max_distance, 20);
+        nh.param<float>("void_value", void_value, 0.0);
         nh.param<bool>("invert_distance", invert_distance, true);
         nh.param<bool>("normalize_image", normalize_image, false);
         vertical_angle_range = max_vertical_angle - min_vertical_angle;
@@ -90,7 +92,7 @@ public:
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         cv_bridge::CvImagePtr cv_ptr;
-        image.image = cv::Mat(height, width, CV_32FC1, cv::Scalar(0));
+        image.image = cv::Mat(height, width, CV_32FC1, cv::Scalar(void_value));
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
         for (int i = 0; i < pcl.width; i++)
