@@ -47,9 +47,9 @@ public:
         nh.param<int>("width", width, 720);
         nh.param<float>("max_vertical_angle", max_vertical_angle, 15.0);
         nh.param<float>("min_vertical_angle", min_vertical_angle, -15.0);
-        nh.param<float>("max_horizontal_angle", max_horizontal_angle, 180);
-        nh.param<float>("min_horizontal_angle", min_horizontal_angle, -180);
-        nh.param<float>("max_distance", max_distance, 20);
+        nh.param<float>("max_horizontal_angle", max_horizontal_angle, 360);
+        nh.param<float>("min_horizontal_angle", min_horizontal_angle, 0);
+        nh.param<float>("max_distance", max_distance, 50);
         nh.param<float>("void_value", void_value, 0.0);
         nh.param<bool>("invert_distance", invert_distance, true);
         nh.param<bool>("normalize_image", normalize_image, false);
@@ -76,12 +76,13 @@ public:
     {
         float dist = std::sqrt(x * x + y * y + z * z);
         float dist_to_z_axis = std::sqrt(x * x + y * y);
-        float theta_angle_deg = std::atan2(y, x) / M_PI * 180;
+        float theta_angle_deg = std::atan2(y, x) / M_PI * 180.0;
+        theta_angle_deg = std::fmod(theta_angle_deg + 360.0, 360.0);
         float delta_angle_deg = std::atan2(z, dist_to_z_axis) / M_PI * 180;
         int delta_idx = std::floor((delta_angle_deg - min_vertical_angle) / (vertical_angle_range) * (height - 1));
-        float reduced_theta = (theta_angle_deg - min_horizontal_angle) / (horizontal_angle_range);
-        int theta_idx = std::floor( reduced_theta * (width - 1));
-        theta_idx = (width - 1) - theta_idx;
+        float reduced_theta = theta_angle_deg / horizontal_angle_range;
+        int theta_idx = std::floor(reduced_theta * (width - 1));
+        // theta_idx = (width - 1) - theta_idx;
         delta_idx = (height - 1) - delta_idx;
         ijd idx;
         idx.i = delta_idx;
@@ -101,11 +102,13 @@ public:
             ijd idx = LidarToVoxelGridNode::point_to_index(point);
             float distance = idx.d;
             float img_number = distance < max_distance ? distance : max_distance;
-            if (invert_distance){
+            if (invert_distance)
+            {
                 img_number = max_distance - img_number;
             }
-            if (normalize_image){
-                img_number/= max_distance;
+            if (normalize_image)
+            {
+                img_number /= max_distance;
             }
             image.image.at<float>(idx.i, idx.j) = img_number;
         }
