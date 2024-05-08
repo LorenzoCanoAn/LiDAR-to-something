@@ -11,7 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <chrono>
 #include <cv_bridge/cv_bridge.h>
-#include <opencv4/opencv2/core.hpp>
+#include <opencv2/core.hpp>
 #include <cmath>
 
 struct ijd
