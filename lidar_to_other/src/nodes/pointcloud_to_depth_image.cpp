@@ -20,7 +20,7 @@ struct ijd
     float d;
 };
 
-class LidarToVoxelGridNode
+class LidarToImageNode
 {
 private:
     ros::NodeHandle nh;
@@ -38,7 +38,7 @@ private:
     bool invert_distance, normalize_image;
 
 public:
-    LidarToVoxelGridNode(void)
+    LidarToImageNode(void)
     {
         nh = ros::NodeHandle("~");
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
@@ -65,7 +65,7 @@ public:
         ROS_DEBUG("Min vertical angle: %f", min_vertical_angle);
         ROS_DEBUG("Max vertical angle: %f", max_vertical_angle);
         ROS_DEBUG("Vertical angle range: %f", vertical_angle_range);
-        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
+        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToImageNode::ptcl_callback, this);
         image_publisher = nh.advertise<sensor_msgs::Image>(output_topic, 1);
     }
     ijd point_to_index(pcl::PointXYZ pt)
@@ -93,13 +93,15 @@ public:
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         cv_bridge::CvImagePtr cv_ptr;
-        image.image = cv::Mat(height, width, CV_32FC1, cv::Scalar(void_value));
+        ROS_DEBUG("Height: %i", height);
+        ROS_DEBUG("Width: %i", width);
+        cv::Mat temp_img = cv::Mat(height, width, CV_32FC1, cv::Scalar(void_value));
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
-        for (int i = 0; i < pcl.width; i++)
+        for (int i = 0; i < pcl.points.size(); i++)
         {
             point = pcl[i];
-            ijd idx = LidarToVoxelGridNode::point_to_index(point);
+            ijd idx = LidarToImageNode::point_to_index(point);
             float distance = idx.d;
             float img_number = distance < max_distance ? distance : max_distance;
             if (invert_distance)
@@ -110,10 +112,14 @@ public:
             {
                 img_number /= max_distance;
             }
-            image.image.at<float>(idx.i, idx.j) = img_number;
+            if (idx.i < height and idx.j < width)
+            {
+                temp_img.at<float>(idx.i, idx.j, 0) = img_number;
+            }
         }
-        image.header.stamp = ros::Time::now();
         sensor_msgs::Image ros_image;
+        image.image = temp_img;
+        ros_image.header.stamp = ros::Time::now();
         image.toImageMsg(ros_image);
         ros_image.encoding = "32FC1";
         image_publisher.publish(ros_image);
@@ -123,6 +129,6 @@ public:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "pointcloud_to_voxelgrid");
-    LidarToVoxelGridNode my_class = LidarToVoxelGridNode();
+    LidarToImageNode my_class = LidarToImageNode();
     ros::spin();
 }

@@ -12,7 +12,7 @@
 #include <voxelgrid_msgs/VoxelGridFloat32MultiarrayStamped.h>
 #include <voxelgrid_msgs/VoxelGridInt16MultiarrayStamped.h>
 
-class LidarToVoxelGridNode
+class LidarToImageNode
 {
 private:
     ros::NodeHandle nh;
@@ -27,7 +27,7 @@ private:
     std::string frame;
 
 public:
-    LidarToVoxelGridNode(void)
+    LidarToImageNode(void)
     {
         nh = ros::NodeHandle("~");
         nh.param<std::string>("input_topic", input_topic, "lidar_reading");
@@ -68,7 +68,7 @@ public:
         ROS_DEBUG("Max x, y, z:(%f,%f,%f)", max_x, max_y, max_z);
         ROS_DEBUG("Voxel grid size: %i", array_size);
         ROS_DEBUG("Voxel grid shape: (%i, %i , %i)", x_size, y_size, z_size);
-        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToVoxelGridNode::ptcl_callback, this);
+        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToImageNode::ptcl_callback, this);
         voxelgrid_publisher = nh.advertise<voxelgrid_msgs::VoxelGridFloat32MultiarrayStamped>(output_topic, 1);
     }
     bool is_point_in_grid(pcl::PointXYZ pt)
@@ -107,7 +107,7 @@ public:
             point = pcl[i];
             if (is_point_in_grid(point))
             {
-                int idx = LidarToVoxelGridNode::point_to_index(point);
+                int idx = LidarToImageNode::point_to_index(point);
                 float_voxelgrid_msg.voxel_grid.array.data[idx] = 1.0;
             }
         }
@@ -122,6 +122,6 @@ public:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "pointcloud_to_voxelgrid");
-    LidarToVoxelGridNode my_class = LidarToVoxelGridNode();
+    LidarToImageNode my_class = LidarToImageNode();
     ros::spin();
 }
