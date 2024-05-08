@@ -93,8 +93,6 @@ public:
     void ptcl_callback(const sensor_msgs::PointCloud2::ConstPtr &ptcl_msg)
     {
         cv_bridge::CvImagePtr cv_ptr;
-        ROS_DEBUG("Height: %i", height);
-        ROS_DEBUG("Width: %i", width);
         cv::Mat temp_img = cv::Mat(height, width, CV_32FC1, cv::Scalar(void_value));
         pcl::fromROSMsg(*ptcl_msg, pcl);
         pcl::PointXYZ point;
