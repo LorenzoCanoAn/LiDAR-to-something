@@ -117,8 +117,8 @@ public:
         }
         sensor_msgs::Image ros_image;
         image.image = temp_img;
-        ros_image.header.stamp = ros::Time::now();
         image.toImageMsg(ros_image);
+        ros_image.header = ptcl_msg->header;
         ros_image.encoding = "32FC1";
         image_publisher.publish(ros_image);
     }
