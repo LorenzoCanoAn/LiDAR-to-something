@@ -26,7 +26,6 @@ private:
     ros::NodeHandle nh;
     ros::Publisher image_publisher;
     ros::Subscriber lidar_subscriber;
-    std::string input_topic, output_topic;
     pcl::PointCloud<pcl::PointXYZ> pcl;
     sensor_msgs::ImagePtr image_msg;
     cv_bridge::CvImage image;
@@ -41,8 +40,6 @@ public:
     LidarToImageNode(void)
     {
         nh = ros::NodeHandle("~");
-        nh.param<std::string>("input_topic", input_topic, "lidar_reading");
-        nh.param<std::string>("output_topic", output_topic, "depth_image");
         nh.param<int>("height", height, 16);
         nh.param<int>("width", width, 720);
         nh.param<float>("max_vertical_angle", max_vertical_angle, 15.0);
@@ -55,8 +52,6 @@ public:
         nh.param<bool>("normalize_image", normalize_image, false);
         vertical_angle_range = max_vertical_angle - min_vertical_angle;
         horizontal_angle_range = max_horizontal_angle - min_horizontal_angle;
-        ROS_DEBUG("Input topic:  %s", input_topic.data());
-        ROS_DEBUG("Output topic: %s", output_topic.data());
         ROS_DEBUG("Height: %i", height);
         ROS_DEBUG("Width: %i", width);
         ROS_DEBUG("Min horizontal angle: %f", min_horizontal_angle);
@@ -65,8 +60,8 @@ public:
         ROS_DEBUG("Min vertical angle: %f", min_vertical_angle);
         ROS_DEBUG("Max vertical angle: %f", max_vertical_angle);
         ROS_DEBUG("Vertical angle range: %f", vertical_angle_range);
-        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>(input_topic, 1, &LidarToImageNode::ptcl_callback, this);
-        image_publisher = nh.advertise<sensor_msgs::Image>(output_topic, 1);
+        lidar_subscriber = nh.subscribe<sensor_msgs::PointCloud2>("input_lidar_topic", 1, &LidarToImageNode::ptcl_callback, this);
+        image_publisher = nh.advertise<sensor_msgs::Image>("output_image_topic", 1);
     }
     ijd point_to_index(pcl::PointXYZ pt)
     {

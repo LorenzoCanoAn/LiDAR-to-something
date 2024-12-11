@@ -1,6 +1,7 @@
 <launch>
-    <arg name='pointcloud_topic' default='/points' />
-    <arg name='image_topic' default='/depth_image' />
+    <arg name='input_lidar_topic'/>
+    <arg name='output_image_topic'/>
+
     <arg name='height' default='16' />
     <arg name='width' default='1024' />
     <arg name="max_vertical_angle" value="15.0" />
@@ -16,8 +17,8 @@
 
     <node name='ptcl_to_depth_image' type="pointcloud_to_depth_image" pkg="lidar_to_other"
         output="screen">
-        <param name="input_topic" value="$(arg pointcloud_topic)" />
-        <param name="output_topic" value="$(arg image_topic)" />
+        <remap from="~input_lidar_topic" to="$(arg input_lidar_topic)" />
+        <remap from="~output_image_topic" to="$(arg output_image_topic)" />
         <param name="height" value="$(arg height)" />
         <param name="width" value="$(arg width)" />
         <param name="max_vertical_angle" value="$(arg max_vertical_angle)" />
